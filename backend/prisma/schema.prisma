@@ -32,6 +32,17 @@ enum TaskVisibility {
 }
 
 
+enum CompanyRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
+
 model User{
   id Int @id @default(autoincrement())
   firstName String 
@@ -40,6 +51,7 @@ model User{
   phone String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  role CompanyRole @default(OWNER)
 
   //AUTH fields
   passwordHash String
@@ -48,6 +60,8 @@ model User{
 
   passwordResetToken String? @unique
   passwordResetTokenExpires DateTime?
+
+  isActive Boolean @default(true)
 
   //relationships
   companies Company[]
@@ -73,6 +87,23 @@ model Company{
   user User @relation(fields:[createdBy], references:[id], onDelete: Restrict)
 }
 
+model CompanyMember{
+  id Int @id @default(autoincrement())
+
+  role String
+  joinedAt DateTime
+
+  //relationships
+  userId Int
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+
+  companyId Int
+  company Company @relation(fields:[companyId], references:[id], onDelete:Cascade)
+
+ 
+  @@unique([userId, companyId])
+}
+
 
 model Workspace{
   id Int @id @default(autoincrement())
@@ -88,6 +119,23 @@ model Workspace{
   
   createdBy Int
   user User @relation(fields:[createdBy], references:[id])
+
+}
+
+model WorkspaceMember{
+  id Int @id @default(autoincrement())
+
+  role WorkspaceRole @default(MEMBER)
+  joinedAt DateTime
+
+  //relationships
+  userId Int
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+
+  workspaceId Int
+  workspace Workspace @relation(fields:[workspaceId], references:[id], onDelete:Cascade)
+
+  @@unique([workspaceId, userId])
 
 }
 
@@ -145,4 +193,17 @@ model Task{
   @@index([status])
   @@index([creatorId])
 
+}
+
+model TaskAssignee{
+  id Int @id @default(autoincrement())
+
+  //relationships
+  userId Int
+  user User @relation(fields:[userId], references:[id], onDelete:Restrict)
+
+  taskId Int
+  task Task @relation(fields:[taskId], references:[id])
+
+  @@unique([taskId, userId])
 }
